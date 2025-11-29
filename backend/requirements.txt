@@ -1,0 +1,8 @@
+fastapi~=0.122.0
+uvicorn
+gunicorn
+pydantic~=2.12.5
+python-dateutil
+
+pytest~=9.0.1
+httpx~=0.28.1
