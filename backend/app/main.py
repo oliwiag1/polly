@@ -3,41 +3,57 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_config
 from app.database import get_database
+from app.logger import get_logger
 from app.routers import survey_router
 
 
-# Zainicjowane bazy danych
+# Zainicjowanie wszystkich singletonów przy starcie aplikacji
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Inicjalizacja singletonów
     db = get_database()
-    print(f"Database initialized: {db.get_stats()}")
+    logger = get_logger()
+    config = get_config()
+    
+    logger.info("Application starting...", module="startup")
+    logger.info(f"Database initialized: {db.get_stats()}", module="startup")
+    logger.info(f"Config loaded: {config.get_stats()}", module="startup")
+    logger.info(f"Logger initialized: {logger.get_stats()}", module="startup")
+    
     yield
-    print("Application shutting down...")
+    
+    logger.info("Application shutting down...", module="shutdown")
 
 
 # Uruchomienie serwera
 def create_app() -> FastAPI:
+    config = get_config()
+    
     app = FastAPI(
-        title="Polly - Survey API",
+        title=config.get("api", "title", "Polly - Survey API"),
         description=(
             "API for creating and managing surveys. "
             "Similar to Microsoft Forms, allows creating surveys, "
             "collecting responses, and viewing statistics."
         ),
-        version="1.0.0",
+        version=config.get("api", "version", "1.0.0"),
         lifespan=lifespan,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=config.get("api", "docs_url", "/docs"),
+        redoc_url=config.get("api", "redoc_url", "/redoc"),
     )
 
+    # Pobranie ustawień CORS z konfiguracji
+    cors_config = config.get_section("cors")
+    
     # Dodanie CORS aby każdy mógł wysłać żądanie
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_origins=cors_config.get("allow_origins", ["*"]),
+        allow_credentials=cors_config.get("allow_credentials", True),
+        allow_methods=cors_config.get("allow_methods", ["*"]),
+        allow_headers=cors_config.get("allow_headers", ["*"]),
     )
 
     # Dodanie endpointów ankiet
@@ -56,9 +72,16 @@ def create_app() -> FastAPI:
     @app.get("/health", tags=["health"])
     async def health_check():
         db = get_database()
+        logger = get_logger()
+        config = get_config()
+        
         return {
             "status": "healthy",
-            "database": db.get_stats(),
+            "singletons": {
+                "database": db.get_stats(),
+                "logger": logger.get_stats(),
+                "config": config.get_stats(),
+            },
         }
     
     return app
