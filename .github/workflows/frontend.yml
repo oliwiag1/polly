@@ -7,11 +7,6 @@ on:
     paths:
       - 'client/**'
       - '.github/workflows/frontend.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'client/**'
   workflow_dispatch:
 
 env:
