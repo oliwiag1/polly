@@ -2,8 +2,10 @@ from collections import Counter
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from app.config import ConfigManager, get_config
 from app.database import Database, get_database
 from app.decorators import log_execution, measure_time, validate_survey_exists
+from app.logger import AppLogger, get_logger
 from app.models import (
     Answer,
     AnswerSubmit,
@@ -19,10 +21,16 @@ from app.models import (
 
 
 class SurveyService:
-    BASE_URL = "http://localhost:8000"
     
-    def __init__(self, database: Database | None = None) -> None:
+    def __init__(
+        self, 
+        database: Database | None = None,
+        config: ConfigManager | None = None,
+        logger: AppLogger | None = None,
+    ) -> None:
         self._db = database or get_database()
+        self._config = config or get_config()
+        self._logger = logger or get_logger()
 
     # Funkcja tworząca ankietę
     @measure_time
@@ -48,9 +56,10 @@ class SurveyService:
 
     # Funkcja generująca linki do ankiety i statystyk ankiety
     def _generate_links(self, survey_id: UUID) -> SurveyLinks:
+        base_url = self._config.base_url
         return SurveyLinks(
-            survey_url=f"{self.BASE_URL}/surveys/{survey_id}",
-            stats_url=f"{self.BASE_URL}/surveys/{survey_id}/stats",
+            survey_url=f"{base_url}/surveys/{survey_id}",
+            stats_url=f"{base_url}/surveys/{survey_id}/stats",
         )
 
     # Pobranie ankiety na podstawie jej identyfikatora
