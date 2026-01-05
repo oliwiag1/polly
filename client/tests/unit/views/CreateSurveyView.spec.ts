@@ -1,13 +1,12 @@
 /**
  * Testy jednostkowe dla CreateSurveyView
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { server } from '../../mocks/server'
 import { http, HttpResponse } from 'msw'
 import CreateSurveyView from '@/views/CreateSurveyView.vue'
-import { createMockSurvey } from '../../factories'
 
 const API_URL = 'http://localhost:8000'
 
@@ -140,7 +139,6 @@ describe('CreateSurveyView', () => {
 
   describe('wysyłanie formularza', () => {
     it('powinien wysyłać formularz i przekierowywać', async () => {
-      const pushSpy = vi.spyOn(router, 'push')
       const wrapper = await mountComponent()
 
       // Wypełnij formularz

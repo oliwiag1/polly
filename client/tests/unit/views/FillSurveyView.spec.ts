@@ -7,7 +7,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { server } from '../../mocks/server'
 import { http, HttpResponse } from 'msw'
 import FillSurveyView from '@/views/FillSurveyView.vue'
-import { createMockSurvey, createSurveyWithAllQuestionTypes } from '../../factories'
+import { createMockSurvey } from '../../factories'
 import { QuestionType } from '@/types/survey'
 
 const API_URL = 'http://localhost:8000'
@@ -191,7 +191,8 @@ describe('FillSurveyView', () => {
 
       const wrapper = await mountComponent()
 
-      expect(wrapper.text()).toContain('Tak') || expect(wrapper.text()).toContain('Nie')
+      const text = wrapper.text()
+      expect(text.includes('Tak') || text.includes('Nie')).toBe(true)
     })
   })
 
@@ -207,8 +208,6 @@ describe('FillSurveyView', () => {
 
   describe('wysyłanie', () => {
     it('powinien przekierowywać po sukcesie', async () => {
-      const pushSpy = vi.spyOn(router, 'push')
-      
       server.use(
         http.get(`${API_URL}/surveys/:id`, () => {
           return HttpResponse.json(createMockSurvey({

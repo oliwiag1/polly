@@ -1,13 +1,12 @@
 /**
  * Testy jednostkowe dla ApiService
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '../../mocks/server'
 import { http, HttpResponse } from 'msw'
 import { QuestionType } from '@/types/survey'
 
 // Musimy dynamicznie importować ApiService po ustawieniu mocków
-let ApiService: typeof import('@/services/api').default
 let apiService: typeof import('@/services/api').apiService
 
 const API_URL = 'http://localhost:8000'
@@ -17,7 +16,6 @@ describe('ApiService', () => {
     server.listen({ onUnhandledRequest: 'warn' })
     // Dynamiczny import po starcie serwera
     const module = await import('@/services/api')
-    ApiService = module.default
     apiService = module.apiService
   })
 
