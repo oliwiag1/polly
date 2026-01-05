@@ -12,8 +12,6 @@ const error = ref<string | null>(null)
 
 const surveyId = computed(() => route.params.id as string)
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
 const fetchStats = async () => {
   try {
     loading.value = true

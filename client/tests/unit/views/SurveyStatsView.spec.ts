@@ -1,7 +1,7 @@
 /**
  * Testy jednostkowe dla SurveyStatsView
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { server } from '../../mocks/server'
@@ -196,7 +196,8 @@ describe('SurveyStatsView', () => {
 
       const wrapper = await mountComponent()
 
-      expect(wrapper.text()).toContain('4.5') || expect(wrapper.text()).toContain('Średnia')
+      const text = wrapper.text()
+      expect(text.includes('4.5') || text.includes('Średnia')).toBe(true)
     })
   })
 

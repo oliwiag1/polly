@@ -1,9 +1,9 @@
 /**
  * Testy integracyjne dla przepływów użytkownika
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import { server } from '../mocks/server'
 import { http, HttpResponse } from 'msw'
 import App from '@/App.vue'

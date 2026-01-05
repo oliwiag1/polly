@@ -1,7 +1,7 @@
 /**
  * Testy End-to-End - pełne scenariusze użytkownika
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { server } from '../mocks/server'
@@ -14,7 +14,7 @@ import FillSurveyView from '@/views/FillSurveyView.vue'
 import SurveyStatsView from '@/views/SurveyStatsView.vue'
 import SurveySuccessView from '@/views/SurveySuccessView.vue'
 import { createMockSurvey, createMockSurveyStats } from '../factories'
-import { QuestionType } from '@/types/survey'
+import { QuestionType, type Survey, type AnswerSubmit } from '@/types/survey'
 
 const API_URL = 'http://localhost:8000'
 
@@ -46,12 +46,10 @@ describe('E2E: Scenariusze użytkownika', () => {
   describe('Scenariusz: Administrator tworzy ankietę', () => {
     it('powinien móc stworzyć kompletną ankietę i zobaczyć statystyki', async () => {
       const createdSurveyId = 'created-survey-123'
-      let surveyCreated = false
 
       server.use(
         http.post(`${API_URL}/surveys/`, async ({ request }) => {
-          const body = await request.json() as any
-          surveyCreated = true
+          const body = await request.json() as Partial<Survey>
           return HttpResponse.json({
             ...createMockSurvey({ id: createdSurveyId }),
             title: body.title,
@@ -90,7 +88,6 @@ describe('E2E: Scenariusze użytkownika', () => {
   describe('Scenariusz: Respondent wypełnia ankietę', () => {
     it('powinien móc wypełnić ankietę i zobaczyć potwierdzenie', async () => {
       const surveyId = 'survey-to-fill'
-      let responseSubmitted = false
 
       server.use(
         http.get(`${API_URL}/surveys/${surveyId}`, () => {
@@ -105,8 +102,7 @@ describe('E2E: Scenariusze użytkownika', () => {
           }))
         }),
         http.post(`${API_URL}/surveys/${surveyId}/responses`, async ({ request }) => {
-          responseSubmitted = true
-          const body = await request.json() as any
+          const body = await request.json() as AnswerSubmit
           return HttpResponse.json({
             message: 'Response recorded',
             response_id: 'resp-123',
@@ -329,13 +325,13 @@ describe('E2E: Pełny cykl życia ankiety', () => {
 
   it('powinien obsłużyć pełny cykl: tworzenie -> wypełnianie -> statystyki', async () => {
     const surveyId = 'lifecycle-survey'
-    let surveyData: any = null
-    let responses: any[] = []
+    let surveyData: Partial<Survey> | null = null
+    const responses: AnswerSubmit[] = []
 
     server.use(
       // Tworzenie ankiety
       http.post(`${API_URL}/surveys/`, async ({ request }) => {
-        surveyData = await request.json()
+        surveyData = await request.json() as Partial<Survey>
         return HttpResponse.json({
           id: surveyId,
           ...surveyData,
