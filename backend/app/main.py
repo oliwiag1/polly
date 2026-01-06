@@ -19,22 +19,22 @@ async def lifespan(app: FastAPI):
     logger = get_logger()
     config = get_config()
     telemetry = get_telemetry()
-    
+
     logger.info("Application starting...", module="startup")
     logger.info(f"Database initialized: {db.get_stats()}", module="startup")
     logger.info(f"Config loaded: {config.get_stats()}", module="startup")
     logger.info(f"Logger initialized: {logger.get_stats()}", module="startup")
     logger.info(f"Telemetry initialized: {telemetry.get_stats()}", module="startup")
-    
+
     yield
-    
+
     logger.info("Application shutting down...", module="shutdown")
 
 
 # Uruchomienie serwera
 def create_app() -> FastAPI:
     config = get_config()
-    
+
     app = FastAPI(
         title=config.get("api", "title", "Polly - Survey API"),
         description=(
@@ -50,7 +50,7 @@ def create_app() -> FastAPI:
 
     # Pobranie ustawień CORS z konfiguracji
     cors_config = config.get_section("cors")
-    
+
     # Dodanie CORS aby każdy mógł wysłać żądanie
     app.add_middleware(
         CORSMiddleware,
@@ -65,7 +65,7 @@ def create_app() -> FastAPI:
 
     # Dodanie endpointów ankiet
     app.include_router(survey_router)
-    
+
     @app.get("/", tags=["health"])
     async def root():
         return {
@@ -84,7 +84,7 @@ def create_app() -> FastAPI:
         telemetry = get_telemetry()
 
         db_stats = db.get_stats()
-        
+
         return {
             "status": "healthy",
             # Backward/Frontend-compatible shortcut fields
@@ -99,7 +99,7 @@ def create_app() -> FastAPI:
                 "telemetry": telemetry.get_stats(),
             },
         }
-    
+
     return app
 
 
@@ -108,7 +108,7 @@ app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",

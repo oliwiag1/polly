@@ -6,7 +6,7 @@ from app.logger import AppLogger, get_logger
 __all__ = [
     "Database",
     "get_database",
-    "ConfigManager", 
+    "ConfigManager",
     "get_config",
     "AppLogger",
     "get_logger",
