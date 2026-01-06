@@ -11,27 +11,25 @@ from app.config import get_config
 from app.logger import get_logger
 
 
-class TelemetryManager:
+class TelemetryMeta(type):
+    _instances: dict[type, Any] = {}
+    _lock: Lock = Lock()
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            with cls._lock:
+                if cls not in cls._instances:
+                    instance = super().__call__(*args, **kwargs)
+                    cls._instances[cls] = instance
+        return cls._instances[cls]
+
+
+class TelemetryManager(metaclass=TelemetryMeta):
     """
     Singleton zarządzający telemetrią Application Insights.
     """
 
-    _instance = None
-    _lock = Lock()
-
-    def __new__(cls):
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-                    cls._instance._initialized = False
-        return cls._instance
-
     def __init__(self) -> None:
-        if self._initialized:
-            return
-
-        self._initialized = True
         self._enabled = False
         self._provider = None
         self._connection_string_present = False

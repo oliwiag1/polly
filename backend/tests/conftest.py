@@ -33,9 +33,10 @@ def reset_singletons():
         LoggerMeta._instances.clear()
 
     # Reset TelemetryManager singleton
-    from app.telemetry import TelemetryManager
+    from app.telemetry import TelemetryMeta
 
-    TelemetryManager._instance = None
+    if hasattr(TelemetryMeta, "_instances"):
+        TelemetryMeta._instances.clear()
 
     yield
 
@@ -43,7 +44,7 @@ def reset_singletons():
     DatabaseMeta._instances.clear()
     ConfigMeta._instances.clear()
     LoggerMeta._instances.clear()
-    TelemetryManager._instance = None
+    TelemetryMeta._instances.clear()
 
 
 @pytest.fixture
