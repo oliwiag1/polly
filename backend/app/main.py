@@ -82,11 +82,18 @@ def create_app() -> FastAPI:
         logger = get_logger()
         config = get_config()
         telemetry = get_telemetry()
+
+        db_stats = db.get_stats()
         
         return {
             "status": "healthy",
+            # Backward/Frontend-compatible shortcut fields
+            "database": {
+                "surveys": db_stats.get("total_surveys", 0),
+                "responses": db_stats.get("total_responses", 0),
+            },
             "singletons": {
-                "database": db.get_stats(),
+                "database": db_stats,
                 "logger": logger.get_stats(),
                 "config": config.get_stats(),
                 "telemetry": telemetry.get_stats(),
