@@ -31,14 +31,12 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
         }
         
         response = None
-        exception_occurred = None
         
         try:
             response = await call_next(request)
             return response
             
         except Exception as e:
-            exception_occurred = e
             telemetry.track_exception(e)
             raise
             

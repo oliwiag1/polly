@@ -92,7 +92,6 @@ class TelemetryManager:
             return
             
         try:
-            from opencensus.ext.azure import metrics_exporter
             # Logowanie jako event przez standardowy logger
             logging.info(f"CustomEvent: {name}", extra={"custom_dimensions": properties or {}})
         except Exception as e:

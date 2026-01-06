@@ -2,7 +2,7 @@ import functools
 import logging
 import time
 from collections.abc import Callable
-from typing import Any, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from fastapi import HTTPException
 

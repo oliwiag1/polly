@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 
 from app.config import ConfigManager, get_config
 from app.database import Database, get_database
-from app.decorators import log_execution, measure_time, validate_survey_exists
+from app.decorators import measure_time
 from app.logger import AppLogger, get_logger
 from app.models import (
     Answer,
