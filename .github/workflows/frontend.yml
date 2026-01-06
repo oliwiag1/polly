@@ -50,6 +50,8 @@ jobs:
     name: 🧪 Unit & Integration Tests
     runs-on: ubuntu-latest
     needs: lint
+    outputs:
+      lines_pct: ${{ steps.coverage.outputs.lines_pct }}
     defaults:
       run:
         working-directory: client
@@ -72,9 +74,11 @@ jobs:
         run: npm run test:coverage
 
       - name: ✅ Check coverage threshold (90%)
+        id: coverage
         run: |
-          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
+          COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json)
           echo "Coverage: $COVERAGE%"
+          echo "lines_pct=$COVERAGE" >> $GITHUB_OUTPUT
           if (( $(echo "$COVERAGE < 90" | bc -l) )); then
             echo "❌ Coverage is below 90%"
             exit 1
@@ -202,5 +206,6 @@ jobs:
           echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
           echo "| 🔍 Lint & Type Check | ${{ needs.lint.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🧪 Unit & Integration Tests | ${{ needs.test-unit.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📊 Coverage (Lines) | ${{ needs.test-unit.outputs.lines_pct }}% |" >> $GITHUB_STEP_SUMMARY
           echo "| 🎭 E2E Tests (Playwright) | ${{ needs.test-e2e.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| 🏗️ Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY

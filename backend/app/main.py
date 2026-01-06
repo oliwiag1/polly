@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_config
 from app.database import get_database
 from app.logger import get_logger
+from app.middleware import TelemetryMiddleware
 from app.routers import survey_router
+from app.telemetry import get_telemetry
 
 
 # Zainicjowanie wszystkich singletonów przy starcie aplikacji
@@ -16,11 +18,13 @@ async def lifespan(app: FastAPI):
     db = get_database()
     logger = get_logger()
     config = get_config()
+    telemetry = get_telemetry()
     
     logger.info("Application starting...", module="startup")
     logger.info(f"Database initialized: {db.get_stats()}", module="startup")
     logger.info(f"Config loaded: {config.get_stats()}", module="startup")
     logger.info(f"Logger initialized: {logger.get_stats()}", module="startup")
+    logger.info(f"Telemetry initialized: {telemetry.get_stats()}", module="startup")
     
     yield
     
@@ -56,6 +60,9 @@ def create_app() -> FastAPI:
         allow_headers=cors_config.get("allow_headers", ["*"]),
     )
 
+    # Dodanie middleware telemetrii (Application Insights)
+    app.add_middleware(TelemetryMiddleware)
+
     # Dodanie endpointów ankiet
     app.include_router(survey_router)
     
@@ -74,6 +81,7 @@ def create_app() -> FastAPI:
         db = get_database()
         logger = get_logger()
         config = get_config()
+        telemetry = get_telemetry()
         
         return {
             "status": "healthy",
@@ -81,6 +89,7 @@ def create_app() -> FastAPI:
                 "database": db.get_stats(),
                 "logger": logger.get_stats(),
                 "config": config.get_stats(),
+                "telemetry": telemetry.get_stats(),
             },
         }
     
