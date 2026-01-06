@@ -35,9 +35,15 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
 
         response = None
 
+        telemetry_stats = telemetry.get_stats()
+
         span_ctx = nullcontext()
         span = None
-        if telemetry.enabled and telemetry.tracer is not None:
+        if (
+            telemetry.enabled
+            and telemetry.tracer is not None
+            and telemetry_stats.get("provider") == "opencensus"
+        ):
             # Span per request; trafi do Application Insights przez AzureExporter
             span_ctx = telemetry.tracer.span(
                 name=f"{request.method} {request.url.path}"

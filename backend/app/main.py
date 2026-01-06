@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
 # Uruchomienie serwera
 def create_app() -> FastAPI:
     config = get_config()
+    telemetry = get_telemetry()
 
     app = FastAPI(
         title=config.get("api", "title", "Polly - Survey API"),
@@ -62,6 +63,20 @@ def create_app() -> FastAPI:
 
     # Dodanie middleware telemetrii (Application Insights)
     app.add_middleware(TelemetryMiddleware)
+
+    # Azure Monitor OpenTelemetry: instrumentacja FastAPI (Requests/Exceptions)
+    telemetry_stats = telemetry.get_stats()
+    if (
+        telemetry_stats.get("enabled")
+        and telemetry_stats.get("provider") == "azure-monitor-opentelemetry"
+    ):
+        try:
+            from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+            FastAPIInstrumentor.instrument_app(app)
+        except Exception:
+            # Nie blokuj startu aplikacji jeśli instrumentacja się nie uda
+            pass
 
     # Dodanie endpointów ankiet
     app.include_router(survey_router)

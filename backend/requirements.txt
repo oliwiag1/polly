@@ -8,6 +8,10 @@ python-dateutil
 opencensus-ext-azure~=1.1.13
 opencensus-ext-logging~=0.1.1
 
+# Azure Monitor OpenTelemetry (Requests/Exceptions/Dependencies)
+azure-monitor-opentelemetry
+opentelemetry-instrumentation-fastapi
+
 pytest>=8.2,<9
 pytest-cov~=4.1.0
 pytest-asyncio>=0.24.0

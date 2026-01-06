@@ -312,3 +312,35 @@ class TestAppLoggerSingleton:
         stats = logger.get_stats()
         assert stats["total_logs"] == 0
         assert all(v == 0 for v in stats["logs_by_level"].values())
+
+
+def test_create_app_instruments_fastapi_when_otel_enabled(monkeypatch):
+    import app.main as main_module
+
+    class StubTelemetry:
+        def get_stats(self):
+            return {
+                "enabled": True,
+                "provider": "azure-monitor-opentelemetry",
+            }
+
+    called = {"value": False}
+
+    def fake_instrument_app(app):
+        called["value"] = True
+
+    monkeypatch.setattr(
+        main_module, "get_telemetry", lambda: StubTelemetry(), raising=True
+    )
+
+    import opentelemetry.instrumentation.fastapi
+
+    monkeypatch.setattr(
+        opentelemetry.instrumentation.fastapi.FastAPIInstrumentor,
+        "instrument_app",
+        staticmethod(fake_instrument_app),
+        raising=True,
+    )
+
+    _app = main_module.create_app()
+    assert called["value"] is True
