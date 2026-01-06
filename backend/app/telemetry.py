@@ -8,6 +8,7 @@ from threading import Lock
 from typing import Any
 
 from app.config import get_config
+from app.logger import get_logger
 
 
 class TelemetryManager:
@@ -40,11 +41,13 @@ class TelemetryManager:
     def _setup(self) -> None:
         """Konfiguruje Application Insights jeśli connection string jest dostępny."""
         config = get_config()
+        app_logger = get_logger()
         connection_string = config.get("azure", "appinsights_connection_string")
 
         if not connection_string:
-            logging.info(
-                "Application Insights disabled - no connection string provided"
+            app_logger.info(
+                "Application Insights disabled - no connection string provided",
+                module="telemetry",
             )
             return
 
@@ -66,17 +69,23 @@ class TelemetryManager:
             azure_handler = AzureLogHandler(connection_string=connection_string)
 
             # Dodanie handlera do root loggera
-            root_logger = logging.getLogger()
-            root_logger.addHandler(azure_handler)
-            root_logger.setLevel(logging.INFO)
+            polly_logger = logging.getLogger("polly")
+            polly_logger.addHandler(azure_handler)
+            polly_logger.setLevel(logging.INFO)
 
             self._enabled = True
-            logging.info("Application Insights initialized successfully")
+            app_logger.info(
+                "Application Insights initialized successfully", module="telemetry"
+            )
 
         except ImportError as e:
-            logging.warning(f"Application Insights packages not available: {e}")
+            app_logger.warning(
+                f"Application Insights packages not available: {e}", module="telemetry"
+            )
         except Exception as e:
-            logging.error(f"Failed to initialize Application Insights: {e}")
+            app_logger.exception(
+                f"Failed to initialize Application Insights: {e}", module="telemetry"
+            )
 
     @property
     def enabled(self) -> bool:
@@ -88,6 +97,11 @@ class TelemetryManager:
         """Zwraca tracer do śledzenia requestów."""
         return self._tracer
 
+    @property
+    def exporter(self):
+        """Zwraca eksportera do middleware OpenCensus/ASGI."""
+        return self._exporter
+
     def track_event(self, name: str, properties: dict[str, Any] | None = None) -> None:
         """Śledzi zdarzenie niestandardowe."""
         if not self._enabled:
@@ -95,24 +109,25 @@ class TelemetryManager:
 
         try:
             # Logowanie jako event przez standardowy logger
-            logging.info(
-                f"CustomEvent: {name}", extra={"custom_dimensions": properties or {}}
+            get_logger().info(
+                f"CustomEvent: {name} props={properties or {}}", module="telemetry"
             )
         except Exception as e:
-            logging.debug(f"Failed to track event: {e}")
+            get_logger().debug(f"Failed to track event: {e}", module="telemetry")
 
     def track_exception(self, exception: Exception) -> None:
         """Śledzi wyjątek."""
         if not self._enabled:
             return
 
-        logging.exception(f"Exception tracked: {exception}")
+        get_logger().exception(f"Exception tracked: {exception}", module="telemetry")
 
     def get_stats(self) -> dict[str, Any]:
         """Zwraca statystyki telemetrii."""
         return {
             "enabled": self._enabled,
             "tracer_active": self._tracer is not None,
+            "exporter_active": self._exporter is not None,
         }
 
 

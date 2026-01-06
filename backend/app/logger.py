@@ -65,6 +65,12 @@ class AppLogger(metaclass=LoggerMeta):
             self._log_count["ERROR"] += 1
         self._logger.error(f"[{module}] {message}")
 
+    # Logowanie wyjątku (z traceback)
+    def exception(self, message: str, module: str = "app") -> None:
+        with self._lock:
+            self._log_count["ERROR"] += 1
+        self._logger.exception(f"[{module}] {message}")
+
     # Logowanie debugowania
     def debug(self, message: str, module: str = "app") -> None:
         with self._lock:

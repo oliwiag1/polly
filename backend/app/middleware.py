@@ -3,12 +3,13 @@ Middleware do śledzenia żądań w Application Insights.
 """
 
 import time
-import logging
+from contextlib import nullcontext
 from typing import Callable
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.logger import get_logger
 from app.telemetry import get_telemetry
 
 
@@ -20,6 +21,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         telemetry = get_telemetry()
+        app_logger = get_logger()
 
         start_time = time.perf_counter()
 
@@ -33,12 +35,34 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
 
         response = None
 
+        span_ctx = nullcontext()
+        span = None
+        if telemetry.enabled and telemetry.tracer is not None:
+            # Span per request; trafi do Application Insights przez AzureExporter
+            span_ctx = telemetry.tracer.span(
+                name=f"{request.method} {request.url.path}"
+            )
+
         try:
-            response = await call_next(request)
-            return response
+            with span_ctx as span:
+                if span is not None:
+                    span.add_attribute("http.method", request.method)
+                    span.add_attribute("http.path", request.url.path)
+                    span.add_attribute("http.url", str(request.url))
+                    span.add_attribute(
+                        "http.client_ip",
+                        request.client.host if request.client else "unknown",
+                    )
+
+                response = await call_next(request)
+                if span is not None:
+                    span.add_attribute("http.status_code", response.status_code)
+                return response
 
         except Exception as e:
             telemetry.track_exception(e)
+            if span is not None:
+                span.add_attribute("error", True)
             raise
 
         finally:
@@ -54,10 +78,13 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
                 "duration_ms": round(duration_ms, 2),
             }
 
+            if span is not None:
+                span.add_attribute("duration_ms", round(duration_ms, 2))
+
             # Logowanie z odpowiednim poziomem
             if status_code >= 500:
-                logging.error(f"Request failed: {log_data}")
+                app_logger.error(f"Request failed: {log_data}", module="http")
             elif status_code >= 400:
-                logging.warning(f"Request client error: {log_data}")
+                app_logger.warning(f"Request client error: {log_data}", module="http")
             else:
-                logging.info(f"Request completed: {log_data}")
+                app_logger.info(f"Request completed: {log_data}", module="http")

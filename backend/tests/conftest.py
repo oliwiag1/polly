@@ -1,10 +1,9 @@
 """
 Konfiguracja i fixture'y dla testów.
 """
+
 import os
 import pytest
-from datetime import datetime
-from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
@@ -17,21 +16,24 @@ def reset_singletons():
     """Resetuje singletony przed każdym testem."""
     # Reset Database singleton
     from app.database import DatabaseMeta
-    if hasattr(DatabaseMeta, '_instances'):
+
+    if hasattr(DatabaseMeta, "_instances"):
         DatabaseMeta._instances.clear()
-    
+
     # Reset ConfigManager singleton
     from app.config import ConfigMeta
-    if hasattr(ConfigMeta, '_instances'):
+
+    if hasattr(ConfigMeta, "_instances"):
         ConfigMeta._instances.clear()
-    
+
     # Reset AppLogger singleton
     from app.logger import LoggerMeta
-    if hasattr(LoggerMeta, '_instances'):
+
+    if hasattr(LoggerMeta, "_instances"):
         LoggerMeta._instances.clear()
-    
+
     yield
-    
+
     # Cleanup po teście
     DatabaseMeta._instances.clear()
     ConfigMeta._instances.clear()
@@ -42,6 +44,7 @@ def reset_singletons():
 def database():
     """Fixture zwracający czystą bazę danych."""
     from app.database import get_database
+
     db = get_database()
     db.clear()
     return db
@@ -51,6 +54,7 @@ def database():
 def config():
     """Fixture zwracający menedżer konfiguracji."""
     from app.config import get_config
+
     return get_config()
 
 
@@ -58,6 +62,7 @@ def config():
 def logger():
     """Fixture zwracający logger."""
     from app.logger import get_logger
+
     log = get_logger()
     log.reset_stats()
     return log
@@ -67,6 +72,7 @@ def logger():
 def survey_service(database, config, logger):
     """Fixture zwracający serwis ankiet."""
     from app.services import SurveyService
+
     return SurveyService(database=database, config=config, logger=logger)
 
 
@@ -74,6 +80,7 @@ def survey_service(database, config, logger):
 def client(database):
     """Fixture zwracający klienta testowego FastAPI."""
     from app.main import create_app
+
     app = create_app()
     return TestClient(app)
 
@@ -82,6 +89,7 @@ def client(database):
 def sample_question_text():
     """Przykładowe pytanie tekstowe."""
     from app.models import Question, QuestionType
+
     return Question(
         id="q1",
         text="Jak masz na imię?",
@@ -94,6 +102,7 @@ def sample_question_text():
 def sample_question_single_choice():
     """Przykładowe pytanie jednokrotnego wyboru."""
     from app.models import Question, QuestionType
+
     return Question(
         id="q2",
         text="Jaki jest Twój ulubiony kolor?",
@@ -107,6 +116,7 @@ def sample_question_single_choice():
 def sample_question_multiple_choice():
     """Przykładowe pytanie wielokrotnego wyboru."""
     from app.models import Question, QuestionType
+
     return Question(
         id="q3",
         text="Jakie języki programowania znasz?",
@@ -120,6 +130,7 @@ def sample_question_multiple_choice():
 def sample_question_rating():
     """Przykładowe pytanie z oceną."""
     from app.models import Question, QuestionType
+
     return Question(
         id="q4",
         text="Oceń naszą usługę",
@@ -134,6 +145,7 @@ def sample_question_rating():
 def sample_question_yes_no():
     """Przykładowe pytanie tak/nie."""
     from app.models import Question, QuestionType
+
     return Question(
         id="q5",
         text="Czy polecisz nas znajomym?",
@@ -151,6 +163,7 @@ def sample_survey_create(
 ):
     """Przykładowe dane do utworzenia ankiety."""
     from app.models import SurveyCreate
+
     return SurveyCreate(
         title="Ankieta testowa",
         description="Opis ankiety testowej",
@@ -173,6 +186,7 @@ def sample_survey_create_all_types(
 ):
     """Ankieta ze wszystkimi typami pytań."""
     from app.models import SurveyCreate
+
     return SurveyCreate(
         title="Pełna ankieta testowa",
         description="Ankieta zawierająca wszystkie typy pytań",
@@ -196,6 +210,7 @@ def created_survey(survey_service, sample_survey_create):
 def sample_answers():
     """Przykładowe odpowiedzi do ankiety."""
     from app.models import Answer
+
     return [
         Answer(question_id="q1", value="Jan Kowalski"),
         Answer(question_id="q2", value="Niebieski"),
@@ -208,6 +223,7 @@ def sample_answers():
 def sample_answer_submit(sample_answers):
     """Przykładowe dane do przesłania odpowiedzi."""
     from app.models import AnswerSubmit
+
     return AnswerSubmit(
         answers=sample_answers,
         respondent_id="respondent-123",
