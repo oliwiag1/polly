@@ -73,6 +73,10 @@ class ConfigManager(metaclass=ConfigMeta):
                 "default_required": False,
                 "allow_anonymous": True,
             },
+            # Azure Application Insights
+            "azure": {
+                "appinsights_connection_string": None,
+            },
         }
 
     # Załadowanie konfiguracji ze zmiennych środowiskowych
@@ -83,6 +87,7 @@ class ConfigManager(metaclass=ConfigMeta):
             "POLLY_DEBUG": ("server", "debug", lambda x: x.lower() == "true"),
             "POLLY_BASE_URL": ("api", "base_url"),
             "POLLY_MAX_QUESTIONS": ("limits", "max_questions_per_survey", int),
+            "APPLICATIONINSIGHTS_CONNECTION_STRING": ("azure", "appinsights_connection_string"),
         }
         
         for env_var, mapping in env_mappings.items():

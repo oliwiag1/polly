@@ -4,6 +4,10 @@ gunicorn
 pydantic~=2.12.5
 python-dateutil
 
+# Azure Application Insights
+opencensus-ext-azure~=1.1.13
+opencensus-ext-logging~=0.1.1
+
 pytest>=8.2,<9
 pytest-cov~=4.1.0
 pytest-asyncio>=0.24.0
