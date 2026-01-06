@@ -33,6 +33,8 @@ class TelemetryManager:
 
         self._initialized = True
         self._enabled = False
+        self._provider = None
+        self._connection_string_present = False
         self._tracer = None
         self._exporter = None
 
@@ -44,12 +46,36 @@ class TelemetryManager:
         app_logger = get_logger()
         connection_string = config.get("azure", "appinsights_connection_string")
 
+        self._connection_string_present = bool(connection_string)
+
         if not connection_string:
             app_logger.info(
                 "Application Insights disabled - no connection string provided",
                 module="telemetry",
             )
             return
+
+        try:
+            # Preferowane: Azure Monitor OpenTelemetry (zapewnia Requests/Exceptions)
+            from azure.monitor.opentelemetry import configure_azure_monitor
+
+            configure_azure_monitor(connection_string=connection_string)
+            self._enabled = True
+            self._provider = "azure-monitor-opentelemetry"
+            app_logger.info(
+                "Azure Monitor OpenTelemetry configured successfully",
+                module="telemetry",
+            )
+            return
+
+        except ImportError:
+            # Fallback do OpenCensus (głównie traces/logs)
+            pass
+        except Exception as e:
+            app_logger.exception(
+                f"Failed to configure Azure Monitor OpenTelemetry: {e}",
+                module="telemetry",
+            )
 
         try:
             from opencensus.ext.azure.trace_exporter import AzureExporter
@@ -74,6 +100,7 @@ class TelemetryManager:
             polly_logger.setLevel(logging.INFO)
 
             self._enabled = True
+            self._provider = "opencensus"
             app_logger.info(
                 "Application Insights initialized successfully", module="telemetry"
             )
@@ -126,6 +153,8 @@ class TelemetryManager:
         """Zwraca statystyki telemetrii."""
         return {
             "enabled": self._enabled,
+            "provider": self._provider,
+            "connection_string_present": self._connection_string_present,
             "tracer_active": self._tracer is not None,
             "exporter_active": self._exporter is not None,
         }
