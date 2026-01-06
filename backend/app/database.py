@@ -8,7 +8,6 @@ from app.models.survey import Survey, SurveyResponse
 
 # Metaklasa niezbędna aby stworzyć singletona
 class DatabaseMeta(type):
-    
     _instances: dict[type, Any] = {}
 
     # Blokada aby singleton był bezpieczny wątkowo (tylko jeden wątek może coś robić)
@@ -22,9 +21,9 @@ class DatabaseMeta(type):
                     cls._instances[cls] = instance
         return cls._instances[cls]
 
+
 # Baza danych w pamięci jako singleton (tylko jeden obiekt w całym programie)
 class Database(metaclass=DatabaseMeta):
-
     # Konstruktor
     def __init__(self) -> None:
         self._surveys: dict[UUID, Survey] = {}

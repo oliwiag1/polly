@@ -7,8 +7,7 @@ from typing import ParamSpec, TypeVar
 from fastapi import HTTPException
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,6 @@ R = TypeVar("R")
 
 # Dekorator na logowanie danych do konsoli
 def log_execution(func: Callable[P, R]) -> Callable[P, R]:
-
     # Dla funkcji asynchronicznych
     @functools.wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -26,7 +24,7 @@ def log_execution(func: Callable[P, R]) -> Callable[P, R]:
         # Logowanie przed wykonaniem żądania
         logger.info(f"Executing {func_name} with args={args}, kwargs={kwargs}")
         start_time = time.perf_counter()
-        
+
         try:
             result = await func(*args, **kwargs)
             elapsed = time.perf_counter() - start_time
@@ -48,7 +46,7 @@ def log_execution(func: Callable[P, R]) -> Callable[P, R]:
         # Logowanie przed wykonaniem żądania
         logger.info(f"Executing {func_name} with args={args}, kwargs={kwargs}")
         start_time = time.perf_counter()
-        
+
         try:
             result = func(*args, **kwargs)
             elapsed = time.perf_counter() - start_time
@@ -70,12 +68,12 @@ def log_execution(func: Callable[P, R]) -> Callable[P, R]:
 # Funkcja sprawdzająca czy funkcja jest asynchroniczna
 def asyncio_iscoroutinefunction(func: Callable) -> bool:
     import asyncio
+
     return asyncio.iscoroutinefunction(func)
 
 
 # Dekorator do obsługi wyjątków
 def handle_exceptions(func: Callable[P, R]) -> Callable[P, R]:
-
     # Dla funkcji asynchronicznych
     @functools.wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -128,48 +126,47 @@ def validate_survey_exists(func: Callable[P, R]) -> Callable[P, R]:
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         from uuid import UUID
         from app.database import get_database
-        
+
         # Wyciągnięcie identyfikatora ankiety
         survey_id = kwargs.get("survey_id")
         if survey_id is None and len(args) > 1:
             potential_id = args[1] if hasattr(args[0], "__class__") else args[0]
             if isinstance(potential_id, UUID):
                 survey_id = potential_id
-        
+
         if survey_id is None:
             raise ValueError("survey_id is required")
-        
+
         db = get_database()
 
         # Sprawdzenie czy ankieta istnieje
         if not db.survey_exists(survey_id):
             raise HTTPException(
-                status_code=404,
-                detail=f"Survey with ID {survey_id} not found"
+                status_code=404, detail=f"Survey with ID {survey_id} not found"
             )
-        
+
         return func(*args, **kwargs)
-    
+
     return wrapper
 
 
 # Dekorator na rate limit (ograniczenie na zbyt dużą ilość żądań - DDoS)
 def rate_limit(max_calls: int, time_window: int):
     calls: dict[str, list[float]] = {}
-    
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
 
+    def decorator(func: Callable[P, R]) -> Callable[P, R]:
         # Dla funkcji asynchronicznych
         @functools.wraps(func)
         async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             current_time = time.time()
             func_name = func.__name__
-            
+
             if func_name not in calls:
                 calls[func_name] = []
 
             calls[func_name] = [
-                call_time for call_time in calls[func_name]
+                call_time
+                for call_time in calls[func_name]
                 if current_time - call_time < time_window
             ]
 
@@ -177,9 +174,9 @@ def rate_limit(max_calls: int, time_window: int):
             if len(calls[func_name]) >= max_calls:
                 raise HTTPException(
                     status_code=429,
-                    detail="Rate limit exceeded. Please try again later."
+                    detail="Rate limit exceeded. Please try again later.",
                 )
-            
+
             calls[func_name].append(current_time)
             return await func(*args, **kwargs)
 
@@ -188,12 +185,13 @@ def rate_limit(max_calls: int, time_window: int):
         def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             current_time = time.time()
             func_name = func.__name__
-            
+
             if func_name not in calls:
                 calls[func_name] = []
-            
+
             calls[func_name] = [
-                call_time for call_time in calls[func_name]
+                call_time
+                for call_time in calls[func_name]
                 if current_time - call_time < time_window
             ]
 
@@ -201,9 +199,9 @@ def rate_limit(max_calls: int, time_window: int):
             if len(calls[func_name]) >= max_calls:
                 raise HTTPException(
                     status_code=429,
-                    detail="Rate limit exceeded. Please try again later."
+                    detail="Rate limit exceeded. Please try again later.",
                 )
-            
+
             calls[func_name].append(current_time)
             return func(*args, **kwargs)
 
@@ -211,13 +209,12 @@ def rate_limit(max_calls: int, time_window: int):
         if asyncio_iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
-    
+
     return decorator
 
 
 # Dekorator ma pomiar czasu wykonania żądania
 def measure_time(func: Callable[P, R]) -> Callable[P, R]:
-
     # Dla funkcji asynchronicznych
     @functools.wraps(func)
     async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:

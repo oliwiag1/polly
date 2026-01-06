@@ -21,9 +21,8 @@ from app.models import (
 
 
 class SurveyService:
-    
     def __init__(
-        self, 
+        self,
         database: Database | None = None,
         config: ConfigManager | None = None,
         logger: AppLogger | None = None,
@@ -73,9 +72,7 @@ class SurveyService:
     # Wysłanie odpowiedzi do ankiety
     @measure_time
     def submit_response(
-        self, 
-        survey_id: UUID, 
-        answer_data: AnswerSubmit
+        self, survey_id: UUID, answer_data: AnswerSubmit
     ) -> SurveyResponse:
         survey = self.get_survey(survey_id)
 
@@ -96,11 +93,7 @@ class SurveyService:
         return response
 
     # Funkcja sprawdzająca poprawność odpowiedzi
-    def _validate_answers(
-        self, 
-        survey: Survey, 
-        answers: list[Answer]
-    ) -> None:
+    def _validate_answers(self, survey: Survey, answers: list[Answer]) -> None:
         question_map = {q.id: q for q in survey.questions}
         answered_ids = {a.question_id for a in answers}
 
@@ -113,13 +106,12 @@ class SurveyService:
 
         # Sprawdzenie czy odpowiedź na pytanie jest poprawna
         for answer in answers:
-
             # Jeżeli nie istnieje pytanie dla ankiety
             if answer.question_id not in question_map:
                 raise ValueError(
                     f"Question with ID {answer.question_id} not found in survey"
                 )
-            
+
             question = question_map[answer.question_id]
             self._validate_single_answer(question, answer)
 
@@ -162,9 +154,7 @@ class SurveyService:
                 min_val = question.min_rating or 1
                 max_val = question.max_rating or 5
                 if not min_val <= value <= max_val:
-                    raise ValueError(
-                        f"Rating must be between {min_val} and {max_val}"
-                    )
+                    raise ValueError(f"Rating must be between {min_val} and {max_val}")
 
             # Jeżeli pole typu tak/nie -> sprawdzenie czy wartość pola jest 'yes', 'no', True lub False
             case QuestionType.YES_NO:
@@ -184,11 +174,11 @@ class SurveyService:
             self._calculate_question_stats(question, responses)
             for question in survey.questions
         ]
-        
+
         last_response_at = None
         if responses:
             last_response_at = max(r.submitted_at for r in responses)
-        
+
         return SurveyStats(
             survey_id=survey_id,
             survey_title=survey.title,
@@ -200,9 +190,7 @@ class SurveyService:
 
     # Funkcja obliczająca statystyki dla pytania
     def _calculate_question_stats(
-        self, 
-        question: Question, 
-        responses: list[SurveyResponse]
+        self, question: Question, responses: list[SurveyResponse]
     ) -> QuestionStats:
         # Collect all answers for this question
         answers = []
@@ -213,7 +201,7 @@ class SurveyService:
 
         # Obliczenie rozkładu odpowiedzi
         distribution = self._calculate_distribution(question.type, answers)
-        
+
         average = None
         # Obliczenie średniej wartości dla pytań o typie ocena
         if question.type == QuestionType.RATING and answers:
@@ -233,15 +221,12 @@ class SurveyService:
 
     # Obliczenie rozkładu odpowiedzi dla pytania
     def _calculate_distribution(
-        self, 
-        question_type: QuestionType, 
-        answers: list
+        self, question_type: QuestionType, answers: list
     ) -> dict[str, int]:
         if not answers:
             return {}
-        
-        match question_type:
 
+        match question_type:
             # Jeżeli odpowiedzią na pytanie jest tekst -> Zliczenie częstotliwości występowania tekstu
             case QuestionType.TEXT:
                 return dict(Counter(str(a) for a in answers))
@@ -265,7 +250,7 @@ class SurveyService:
                     else:
                         normalized.append("no")
                 return dict(Counter(normalized))
-            
+
             case _:
                 return dict(Counter(str(a) for a in answers))
 

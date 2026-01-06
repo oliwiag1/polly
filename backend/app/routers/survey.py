@@ -31,8 +31,8 @@ def get_survey_service(db: Database = Depends(get_database)) -> SurveyService:
 @handle_exceptions
 @log_execution
 async def create_survey(
-    survey_data: SurveyCreate,
-    service: SurveyService = Depends(get_survey_service)) -> Survey:
+    survey_data: SurveyCreate, service: SurveyService = Depends(get_survey_service)
+) -> Survey:
     return service.create_survey(survey_data)
 
 
@@ -45,7 +45,9 @@ async def create_survey(
 )
 @handle_exceptions
 @log_execution
-async def get_all_surveys(service: SurveyService = Depends(get_survey_service)) -> list[Survey]:
+async def get_all_surveys(
+    service: SurveyService = Depends(get_survey_service),
+) -> list[Survey]:
     return service.get_all_surveys()
 
 

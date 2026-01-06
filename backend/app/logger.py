@@ -24,25 +24,25 @@ class AppLogger(metaclass=LoggerMeta):
     """
     Singleton zarządzający logowaniem w całej aplikacji.
     """
-    
+
     def __init__(self) -> None:
         self._lock = Lock()
         self._initialized_at = datetime.now()
         self._log_count = {"INFO": 0, "WARNING": 0, "ERROR": 0, "DEBUG": 0}
-        
+
         # Konfiguracja głównego loggera
         self._logger = logging.getLogger("polly")
         self._logger.setLevel(logging.DEBUG)
-        
+
         # Handler do konsoli
         if not self._logger.handlers:
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setLevel(logging.INFO)
-            
+
             # Format logów
             formatter = logging.Formatter(
                 "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-                datefmt="%Y-%m-%d %H:%M:%S"
+                datefmt="%Y-%m-%d %H:%M:%S",
             )
             console_handler.setFormatter(formatter)
             self._logger.addHandler(console_handler)
@@ -72,7 +72,9 @@ class AppLogger(metaclass=LoggerMeta):
         self._logger.debug(f"[{module}] {message}")
 
     # Logowanie żądania HTTP
-    def log_request(self, method: str, path: str, status_code: int, duration_ms: float) -> None:
+    def log_request(
+        self, method: str, path: str, status_code: int, duration_ms: float
+    ) -> None:
         message = f"{method} {path} -> {status_code} ({duration_ms:.2f}ms)"
         if status_code >= 400:
             self.warning(message, module="http")
@@ -80,7 +82,9 @@ class AppLogger(metaclass=LoggerMeta):
             self.info(message, module="http")
 
     # Logowanie operacji na bazie danych
-    def log_database_operation(self, operation: str, entity: str, entity_id: str | None = None) -> None:
+    def log_database_operation(
+        self, operation: str, entity: str, entity_id: str | None = None
+    ) -> None:
         if entity_id:
             message = f"{operation} {entity} (ID: {entity_id})"
         else:
